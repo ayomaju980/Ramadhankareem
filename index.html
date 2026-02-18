@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ramadhan Display | Purwokerto</title>
+<title>Ramadhan Display Final | Purwokerto</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -18,26 +18,38 @@
 }
 
 *{box-sizing:border-box;font-family:'Inter',sans-serif}
+
+html,body{
+  width:100%;
+  height:100%;
+}
+
 body{
   margin:0;
   background:radial-gradient(circle at 30% 30%,#1e293b,var(--bg));
   color:var(--text);
-  min-height:100vh;
   padding:20px;
   transition:.4s ease;
+}
+
+body.tv-mode{
+  padding:0;
+  overflow:hidden;
 }
 
 .wrapper{
   display:grid;
   grid-template-columns:1fr;
   gap:24px;
-  max-width:1400px;
+  max-width:1500px;
   margin:auto;
-  transition:.4s ease;
+  height:100%;
 }
 
 body.tv-mode .wrapper{
   grid-template-columns:1.2fr 1fr;
+  align-items:stretch;
+  max-width:100%;
 }
 
 .panel{
@@ -45,6 +57,11 @@ body.tv-mode .wrapper{
   border-radius:28px;
   padding:32px;
   box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+
+body.tv-mode .panel{
+  border-radius:0;
+  height:100%;
 }
 
 .header-row{
@@ -70,11 +87,18 @@ body.tv-mode .wrapper{
   font-weight:600;
 }
 
+/* Toggle tetap tampil meskipun TV mode aktif */
+body.tv-mode .tv-toggle{
+  display:inline-block;
+}
+
 .countdown-label{text-transform:uppercase;font-size:14px;letter-spacing:2px;color:var(--muted);margin-top:20px}
 .main-time{font-size:clamp(48px,7vw,96px);font-weight:800;letter-spacing:4px;color:var(--primary);margin-top:10px}
 .active-indicator{margin-top:16px;font-size:16px;font-weight:600;color:var(--active)}
 
-.table-wrapper{overflow:hidden;border-radius:20px}
+.table-wrapper{overflow:hidden;border-radius:20px;height:100%}
+body.tv-mode .table-wrapper{overflow:hidden}
+
 table{width:100%;border-collapse:collapse}
 th{background:#1f2937;padding:14px;font-size:12px;text-transform:uppercase;color:var(--muted)}
 td{padding:14px;border-bottom:1px solid #1e293b;font-size:14px}
@@ -149,58 +173,64 @@ tr.today{background:rgba(34,211,238,.1);border-left:4px solid var(--primary)}
 </div>
 
 <script>
-/* ===============================
-   TV MODE SYSTEM (AUTO + MANUAL)
-================================*/
+/* ================= TV MODE ================= */
 
 const tvToggle = document.getElementById('tvToggle');
 
 function hideCursor(){ document.body.style.cursor='none'; }
 function showCursor(){ document.body.style.cursor='default'; }
 
-function applySavedTVMode(){
-  const saved = localStorage.getItem('tvMode');
-  if(saved === 'true'){
-    document.body.classList.add('tv-mode');
-    hideCursor();
-    tvToggle.textContent='Nonaktifkan TV Mode';
+function enableFullscreen(){
+  const el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen();
+}
+
+function activateTVMode(save=true){
+  document.body.classList.add('tv-mode');
+  hideCursor();
+  if(save) localStorage.setItem('tvMode','true');
+}
+
+function deactivateTVMode(){
+  document.body.classList.remove('tv-mode');
+  showCursor();
+  localStorage.setItem('tvMode','false');
+}
+
+// Auto detect based on width (STB safe)
+function autoDetectTV(){
+  if(window.innerWidth >= 1200){
+    activateTVMode(false);
   }
 }
 
-function detectTVMode(){
-  const isLandscape = window.innerWidth > window.innerHeight;
-  const isAndroidTV = navigator.userAgent.toLowerCase().includes('android') && !navigator.userAgent.toLowerCase().includes('mobile');
-
-  if(isLandscape && isAndroidTV){
-    document.body.classList.add('tv-mode');
-    localStorage.setItem('tvMode','true');
-    hideCursor();
-  }
+// Apply saved mode
+function applySaved(){
+  const saved=localStorage.getItem('tvMode');
+  if(saved==='true') activateTVMode(false);
 }
 
 if(tvToggle){
   tvToggle.addEventListener('click',()=>{
-    document.body.classList.toggle('tv-mode');
-    const active = document.body.classList.contains('tv-mode');
-    localStorage.setItem('tvMode',active);
-    if(active){
-      hideCursor();
-      tvToggle.textContent='Nonaktifkan TV Mode';
-    }else{
-      showCursor();
+    if(document.body.classList.contains('tv-mode')){
+      deactivateTVMode();
       tvToggle.textContent='Aktifkan TV Mode';
+    }else{
+      activateTVMode();
+      enableFullscreen();
+      tvToggle.textContent='Nonaktifkan TV Mode';
     }
   });
 }
 
 window.addEventListener('load',()=>{
-  applySavedTVMode();
-  detectTVMode();
+  applySaved();
+  autoDetectTV();
 });
 
-/* ===============================
-   DATA & DISPLAY
-================================*/
+window.addEventListener('resize',autoDetectTV);
+
+/* ================= DATA ================= */
 
 const lat=-7.4242;
 const lon=109.2396;
