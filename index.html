@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Ramadhan Display TV | Purwokerto</title>
+<title>Ramadhan Display | Purwokerto</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
@@ -17,23 +17,20 @@
   --active:#10b981;
 }
 *{box-sizing:border-box;font-family:'Inter',sans-serif}
-body{margin:0;background:radial-gradient(circle at 30% 30%,#1e293b,var(--bg));color:var(--text);min-height:100vh;padding:20px}
+body{margin:0;background:radial-gradient(circle at 30% 30%,#1e293b,var(--bg));color:var(--text);min-height:100vh;padding:20px;transition:.4s ease}
 
-/* LANDSCAPE TV GRID */
 .wrapper{
   display:grid;
-  grid-template-columns: 1fr; /* default laptop & below = vertical */
+  grid-template-columns:1fr;
   gap:24px;
   max-width:1400px;
   margin:auto;
+  transition:.4s ease;
 }
 
-/* Hanya layar sangat besar (TV / >=1400px) jadi 2 kolom */
-@media(min-width:1400px){
-  .wrapper{
-    grid-template-columns: 1.2fr 1fr;
-  }
-}
+/* TV MODE ACTIVE */
+body.tv-mode .wrapper{
+  grid-template-columns:1.2fr 1fr;
 }
 
 .panel{
@@ -43,65 +40,48 @@ body{margin:0;background:radial-gradient(circle at 30% 30%,#1e293b,var(--bg));co
   box-shadow:0 20px 60px rgba(0,0,0,.5);
 }
 
-/* LEFT SIDE (MAIN DISPLAY) */
-.header-row{
+.header-top{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:20px;
+  margin-bottom:15px;
 }
 
-.title{
-  font-size:clamp(22px,3vw,34px);
-  font-weight:800;
-}
-
-.hijri{
-  font-size:14px;
-  color:var(--muted);
+.tv-toggle{
+  background:rgba(34,211,238,.15);
+  color:var(--primary);
+  border:none;
+  padding:8px 14px;
+  border-radius:999px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:600;
 }
 
 .small-clock{
-  font-size:18px;
-  font-weight:600;
-  color:var(--primary);
-}
-
-.countdown-label{
-  text-transform:uppercase;
-  font-size:14px;
-  letter-spacing:2px;
-  color:var(--muted);
-  margin-top:20px;
-}
-
-.main-time{
-  font-size:clamp(48px,7vw,96px);
-  font-weight:800;
-  letter-spacing:4px;
-  color:var(--primary);
-  margin-top:10px;
-}
-
-.active-indicator{
-  margin-top:16px;
   font-size:16px;
   font-weight:600;
-  color:var(--active);
+  color:var(--primary);
 }
 
-/* RIGHT SIDE TABLE */
+.title{font-size:clamp(22px,3vw,34px);font-weight:800}
+.hijri{font-size:14px;color:var(--muted)}
+.countdown-label{text-transform:uppercase;font-size:14px;letter-spacing:2px;color:var(--muted);margin-top:20px}
+.main-time{font-size:clamp(48px,7vw,96px);font-weight:800;letter-spacing:4px;color:var(--primary);margin-top:10px}
+.active-indicator{margin-top:16px;font-size:16px;font-weight:600;color:var(--active)}
 .table-wrapper{overflow:hidden;border-radius:20px}
 table{width:100%;border-collapse:collapse}
 th{background:#1f2937;padding:14px;font-size:12px;text-transform:uppercase;color:var(--muted)}
 td{padding:14px;border-bottom:1px solid #1e293b;font-size:14px}
 tr.today{background:rgba(34,211,238,.1);border-left:4px solid var(--primary)}
-tr.active-row{background:rgba(16,185,129,.15)}
-
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;pointer-events:none;transition:.4s ease;z-index:999}
 .overlay.show{opacity:1}
 .overlay h1{font-size:clamp(40px,6vw,80px);color:var(--accent);margin:0}
 .overlay p{margin-top:12px;font-size:clamp(22px,4vw,36px)}
+
+@media(max-width:1100px){
+  body.tv-mode .wrapper{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -113,14 +93,16 @@ tr.active-row{background:rgba(16,185,129,.15)}
 
 <div class="wrapper">
 
-<!-- LEFT PANEL -->
 <div class="panel">
-  <div class="header-row">
+  <div class="header-top">
     <div>
       <div class="title">Jadwal Ramadhan - Purwokerto</div>
       <div class="hijri" id="hijriDate">Hijriyah</div>
     </div>
-    <div class="small-clock" id="smallClock">00:00:00</div>
+    <div style="text-align:right">
+      <div class="small-clock" id="smallClock">00:00:00</div>
+      <button class="tv-toggle" id="tvToggle">Aktifkan TV Mode</button>
+    </div>
   </div>
 
   <div class="countdown-label" id="nextLabel">Menuju ...</div>
@@ -128,7 +110,6 @@ tr.active-row{background:rgba(16,185,129,.15)}
   <div class="active-indicator" id="activeIndicator"></div>
 </div>
 
-<!-- RIGHT PANEL -->
 <div class="panel">
   <div class="table-wrapper">
   <table>
@@ -166,9 +147,26 @@ const overlayName=document.getElementById('overlayName');
 const smallClock=document.getElementById('smallClock');
 const hijriDate=document.getElementById('hijriDate');
 const activeIndicator=document.getElementById('activeIndicator');
+const tvToggle=document.getElementById('tvToggle');
 
 let ramadhanData=[];
 let todayPrayers=[];
+
+// Toggle TV Mode
+tvToggle.addEventListener('click',()=>{
+  document.body.classList.toggle('tv-mode');
+  if(document.body.classList.contains('tv-mode')){
+    tvToggle.textContent='Nonaktifkan TV Mode';
+    enableFullscreen();
+  }else{
+    tvToggle.textContent='Aktifkan TV Mode';
+  }
+});
+
+function enableFullscreen(){
+  const el=document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen();
+}
 
 async function init(){
 const year=new Date().getFullYear();
