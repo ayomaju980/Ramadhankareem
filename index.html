@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jadwal Imsakiyah Ramadhan | Banyumas</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#f5c36b;
+  --bg1:#0b1220;
+  --bg2:#132347;
+  --glass:rgba(255,255,255,0.05);
+  --muted:#94a3b8;
+}
+*{box-sizing:border-box;font-family:'Poppins',sans-serif}
+body{
+  margin:0;
+  background:linear-gradient(160deg,var(--bg1),var(--bg2));
+  color:#fff;
+  min-height:100vh;
+  padding:40px 16px;
+}
+.container{max-width:1200px;margin:auto}
+
+/* HEADER */
+.header{text-align:center;margin-bottom:25px}
+.header h1{
+  margin:0;
+  font-size:clamp(22px,4vw,36px);
+  font-weight:700;
+  background:linear-gradient(90deg,var(--gold),#fff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.header p{margin-top:6px;color:var(--muted);font-size:13px}
+
+/* CARD */
+.card{
+  backdrop-filter:blur(16px);
+  background:var(--glass);
+  border-radius:22px;
+  padding:clamp(18px,3vw,40px);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+
+/* COUNTDOWN */
+.top-countdown{
+  text-align:center;
+  margin-bottom:30px;
+}
+.top-countdown h2{
+  margin:0 0 8px 0;
+  font-weight:600;
+  color:var(--gold);
+  letter-spacing:2px;
+  font-size:clamp(14px,2.5vw,20px);
+}
+.main-time{
+  font-size:clamp(32px,8vw,64px);
+  font-weight:700;
+  letter-spacing:4px;
+  text-shadow:0 0 20px rgba(245,195,107,.6);
+  word-break:break-word;
+}
+.next-label{
+  color:var(--muted);
+  font-size:12px;
+  margin-top:6px;
+}
+
+/* TABLE WRAPPER RESPONSIVE */
+.table-wrapper{
+  width:100%;
+  overflow-x:auto;
+  border-radius:16px;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  min-width:650px;
+  border-collapse:collapse;
+}
+thead{background:rgba(245,195,107,0.15)}
+th{
+  padding:14px;
+  font-size:11px;
+  letter-spacing:1px;
+  color:var(--gold);
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+td{
+  padding:14px;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  font-size:13px;
+  white-space:nowrap;
+}
+tbody tr:hover{background:rgba(245,195,107,0.08)}
+tr.today{
+  background:rgba(245,195,107,.15);
+  border-left:4px solid var(--gold);
+}
+
+/* ADZAN OVERLAY */
+.adzan-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.9);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  font-size:clamp(26px,6vw,48px);
+  font-weight:700;
+  color:var(--gold);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .4s ease;
+  z-index:999;
+  text-align:center;
+  padding:20px;
+}
+.adzan-overlay.show{opacity:1}
+
+/* MOBILE OPTIMIZATION */
+@media(max-width:600px){
+  body{padding:25px 12px}
+  .card{border-radius:18px}
+  th,td{padding:10px}
+}
+</style>
+</head>
+<body>
+
+<div class="adzan-overlay" id="adzanOverlay">
+  <div>WAKTU ADZAN</div>
+  <div id="adzanName" style="margin-top:10px;font-size:clamp(18px,4vw,28px)"></div>
+</div>
+
+<div class="container">
+
+<div class="header">
+  <h1>Jadwal Imsakiyah Ramadhan</h1>
+  <p>Wilayah Banyumas • Metode Kemenag RI • WIB</p>
+</div>
+
+<div class="card">
+
+<div class="top-countdown">
+  <h2 id="nextPrayerName">MENUJU ...</h2>
+  <div id="mainCountdown" class="main-time">--:--:--</div>
+  <div class="next-label">Auto pindah ke waktu berikutnya</div>
+</div>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Imsak</th>
+<th>Subuh</th>
+<th>Dzuhur</th>
+<th>Ashar</th>
+<th>Maghrib</th>
+<th>Isya</th>
+</tr>
+</thead>
+<tbody id="jadwal-body">
+<tr><td colspan="7">Mendeteksi bulan Ramadhan...</td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+</div>
+
+<script>
+const latitude=-7.4264;
+const longitude=109.2461;
+const method=20;
+const school=0;
+const tbody=document.getElementById('jadwal-body');
+const mainCountdown=document.getElementById('mainCountdown');
+const nextPrayerName=document.getElementById('nextPrayerName');
+const adzanOverlay=document.getElementById('adzanOverlay');
+const adzanName=document.getElementById('adzanName');
+const now=new Date();
+const currentYear=now.getFullYear();
+let todayPrayers=[];
+
+async function detectRamadhan(){
+let ramadhanDays=[];
+for(let m=1;m<=12;m++){
+const res=await fetch(`https://api.aladhan.com/v1/calendar?latitude=${latitude}&longitude=${longitude}&method=${method}&school=${school}&month=${m}&year=${currentYear}`);
+const data=await res.json();
+if(data.code!==200) continue;
+data.data.forEach(day=>{
+if(day.date.hijri.month.number===9){ramadhanDays.push(day);}    
+});
+}
+if(ramadhanDays.length===0){
+tbody.innerHTML='<tr><td colspan="7">Ramadhan tidak ditemukan.</td></tr>';
+return;
+}
+renderTable(ramadhanDays);
+prepareTodayPrayers(ramadhanDays);
+}
+
+function renderTable(days){
+tbody.innerHTML='';
+days.forEach(day=>{
+const tr=document.createElement('tr');
+const [dd,mm,yyyy]=day.date.gregorian.date.split('-').map(n=>parseInt(n));
+if(dd===now.getDate()&&mm===now.getMonth()+1&&yyyy===now.getFullYear()){
+tr.classList.add('today');
+}
+tr.innerHTML=`
+<td>${day.date.readable}</td>
+<td>${clean(day.timings.Imsak)}</td>
+<td>${clean(day.timings.Fajr)}</td>
+<td>${clean(day.timings.Dhuhr)}</td>
+<td>${clean(day.timings.Asr)}</td>
+<td>${clean(day.timings.Maghrib)}</td>
+<td>${clean(day.timings.Isha)}</td>
+`;
+tbody.appendChild(tr);
+});
+}
+
+function clean(t){return t.replace(/\s*\(.+\)/,'').trim();}
+
+function prepareTodayPrayers(days){
+const today=days.find(d=>{
+const [dd,mm,yyyy]=d.date.gregorian.date.split('-').map(n=>parseInt(n));
+return dd===now.getDate()&&mm===now.getMonth()+1&&yyyy===now.getFullYear();
+});
+if(!today) return;
+const [dd,mm,yyyy]=today.date.gregorian.date.split('-').map(n=>parseInt(n));
+const prayers=[
+{name:'Imsak',time:clean(today.timings.Imsak)},
+{name:'Subuh',time:clean(today.timings.Fajr)},
+{name:'Dzuhur',time:clean(today.timings.Dhuhr)},
+{name:'Ashar',time:clean(today.timings.Asr)},
+{name:'Maghrib',time:clean(today.timings.Maghrib)},
+{name:'Isya',time:clean(today.timings.Isha)}
+];
+todayPrayers=prayers.map(p=>{
+const [h,m]=p.time.split(':').map(Number);
+return {...p,date:new Date(yyyy,mm-1,dd,h,m,0)};
+});
+setInterval(updateMainCountdown,1000);
+updateMainCountdown();
+}
+
+function updateMainCountdown(){
+const nowTime=new Date();
+let next=todayPrayers.find(p=>p.date>nowTime);
+if(!next){
+nextPrayerName.textContent="Menunggu Hari Berikutnya";
+mainCountdown.textContent="00:00:00";
+return;
+}
+nextPrayerName.textContent="MENUJU " + next.name.toUpperCase();
+const diff=next.date-nowTime;
+mainCountdown.textContent=format(diff);
+if(diff<=1000 && diff>0){triggerAdzan(next.name)}
+}
+
+function triggerAdzan(name){
+adzanName.textContent=name.toUpperCase();
+adzanOverlay.classList.add('show');
+setTimeout(()=>{adzanOverlay.classList.remove('show')},10000);
+}
+
+function format(ms){
+if(ms<=0) return '00:00:00';
+const t=Math.floor(ms/1000);
+const h=Math.floor(t/3600);
+const m=Math.floor((t%3600)/60);
+const s=t%60;
+return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+}
+
+detectRamadhan();
+
+// ==============================
+// TAMBAHAN MODE JAM DIGITAL
+// ==============================
+
+let midnightTarget=null;
+
+function updateMainDisplay(){
+const nowTime=new Date();
+let next=todayPrayers.find(p=>p.date>nowTime);
+
+if(next){
+nextPrayerName.textContent="MENUJU " + next.name.toUpperCase();
+const diff=next.date-nowTime;
+mainCountdown.textContent=format(diff);
+if(diff<=1000 && diff>0){triggerAdzan(next.name)}
+}else{
+nextPrayerName.textContent="JAM SEKARANG";
+mainCountdown.textContent=formatClock(nowTime);
+
+if(midnightTarget && nowTime>=midnightTarget){
+location.reload();
+}
+}
+}
+
+function formatClock(date){
+const h=String(date.getHours()).padStart(2,'0');
+const m=String(date.getMinutes()).padStart(2,'0');
+const s=String(date.getSeconds()).padStart(2,'0');
+return `${h}:${m}:${s}`;
+}
+
+// override prepareTodayPrayers agar set midnight target
+const originalPrepare=prepareTodayPrayers;
+prepareTodayPrayers=function(days){
+originalPrepare(days);
+if(todayPrayers.length>0){
+const last=todayPrayers[0].date;
+midnightTarget=new Date(last.getFullYear(),last.getMonth(),last.getDate()+1,0,0,0);
+}
+setInterval(updateMainDisplay,1000);
+updateMainDisplay();
+}
+
+</script>
+</body>
+</html>
