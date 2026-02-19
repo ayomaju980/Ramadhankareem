@@ -42,12 +42,7 @@ body::before{
 }
 
 /* ================= TV MODE ================= */
-
-body.tv-mode{
-  padding:0;
-  overflow:hidden;
-}
-
+body.tv-mode{ padding:0; overflow:hidden; }
 .wrapper{
   display:grid;
   grid-template-columns:1fr;
@@ -57,12 +52,7 @@ body.tv-mode{
   min-height: 100vh;
   align-items: center;
 }
-
-body.tv-mode .wrapper{
-  grid-template-columns: 45% 55%; 
-  gap:0;
-  max-width:100%;
-}
+body.tv-mode .wrapper{ grid-template-columns: 45% 55%; gap:0; max-width:100%; }
 
 .panel{
   background:var(--panel);
@@ -70,31 +60,11 @@ body.tv-mode .wrapper{
   padding:40px;
   box-shadow:0 20px 60px rgba(0,0,0,.5);
 }
+body.tv-mode .panel{ border-radius:0; height:100vh; display: flex; flex-direction: column; justify-content: center; }
 
-body.tv-mode .panel{
-  border-radius:0;
-  height:100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.header-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  margin-bottom:30px;
-}
-
+.header-row{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:30px; }
 .title{font-size:clamp(22px, 2.5vw, 32px); font-weight:800; line-height:1.2}
-
-.big-date{
-  font-size:clamp(18px, 1.8vw, 24px);
-  font-weight:600;
-  margin-top:10px;
-  color:var(--accent);
-}
-
+.big-date{ font-size:clamp(18px, 1.8vw, 24px); font-weight:600; margin-top:10px; color:var(--accent); }
 .hijri{font-size:16px; color:var(--muted); margin-top:5px}
 .small-clock{font-size:24px; font-weight:700; color:var(--primary); font-variant-numeric: tabular-nums;}
 
@@ -110,13 +80,7 @@ body.tv-mode .panel{
   font-weight:600;
 }
 
-.countdown-label{
-  text-transform:uppercase;
-  font-size:clamp(14px, 1.2vw, 18px);
-  letter-spacing:4px;
-  color:var(--muted);
-}
-
+.countdown-label{ text-transform:uppercase; font-size:clamp(14px, 1.2vw, 18px); letter-spacing:4px; color:var(--muted); }
 .main-time{
   font-size:clamp(60px, 8vw, 120px);
   font-weight:800;
@@ -125,7 +89,6 @@ body.tv-mode .panel{
   margin: 10px 0;
   font-variant-numeric: tabular-nums;
 }
-
 .active-indicator{
   margin-top:20px;
   padding: 10px 20px;
@@ -138,61 +101,23 @@ body.tv-mode .panel{
 }
 
 /* ================= TABLE ================= */
-
-.table-wrapper{
-  overflow:hidden;
-  border-radius:20px;
-  background: rgba(0,0,0,0.2);
-}
-
-body.tv-mode .table-wrapper {
-  height: 90%;
-  margin: 20px;
-}
-
+.table-wrapper{ overflow:hidden; border-radius:20px; background: rgba(0,0,0,0.2); }
+body.tv-mode .table-wrapper { height: 90%; margin: 20px; }
 table{width:100%; border-collapse:collapse;}
+th{ background:#1f2937; padding:18px 10px; font-size: clamp(10px, 0.8vw, 14px); text-transform:uppercase; color:var(--muted); }
+td{ padding:clamp(10px, 1.2vh, 18px) 10px; border-bottom:1px solid rgba(255,255,255,0.03); font-size: clamp(12px, 0.9vw, 15px); text-align: center; }
 
-th{
-  background:#1f2937;
-  padding:18px 10px;
-  font-size: clamp(10px, 0.8vw, 14px);
-  text-transform:uppercase;
-  color:var(--muted);
-}
-
-td{
-  padding:clamp(10px, 1.2vh, 18px) 10px;
-  border-bottom:1px solid rgba(255,255,255,0.03);
-  font-size: clamp(12px, 0.9vw, 15px);
-  text-align: center;
-}
-
-tr.today {
-  background: rgba(34, 211, 238, 0.2) !important;
-  box-shadow: inset 6px 0 0 var(--primary);
-}
+tr.today { background: rgba(34, 211, 238, 0.2) !important; box-shadow: inset 6px 0 0 var(--primary); }
 tr.today td { font-weight: 700; color: var(--primary); }
-
 tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
 
 .fade{ animation:fadeSlide .6s ease; }
-@keyframes fadeSlide{
-  from{opacity:0; transform:translateX(20px);}
-  to{opacity:1; transform:translateX(0);}
-}
+@keyframes fadeSlide{ from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
 
 .overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(15, 23, 42, 0.98);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex-direction:column;
-  opacity:0;
-  pointer-events:none;
-  transition:.5s;
-  z-index:999;
+  position:fixed; inset:0; background:rgba(15, 23, 42, 0.98);
+  display:flex; align-items:center; justify-content:center; flex-direction:column;
+  opacity:0; pointer-events:none; transition:.5s; z-index:999;
 }
 .overlay.show{opacity:1}
 </style>
@@ -208,9 +133,9 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
   <div class="panel">
     <div class="header-row">
       <div>
-        <div class="title">Jadwal Ramadhan<br>Purwokerto</div>
-        <div class="big-date" id="bigDate"></div>
-        <div class="hijri" id="hijriDate">Hijriyah</div>
+        <div class="title">Jadwal Imsakiyah<br>Purwokerto</div>
+        <div class="big-date" id="bigDate">Memuat...</div>
+        <div class="hijri" id="hijriDate" style="color:var(--muted); font-size:14px; margin-top:5px;"></div>
       </div>
       <div style="text-align:right">
         <div class="small-clock" id="smallClock">00:00:00</div>
@@ -221,7 +146,7 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
     <div style="margin-top:auto; margin-bottom:auto">
       <div class="countdown-label" id="nextLabel">Waktu Sekarang</div>
       <div class="main-time" id="mainTime">--:--:--</div>
-      <div class="active-indicator" id="activeIndicator">Waktu aktif: -</div>
+      <div id="activeIndicator" class="active-indicator">Waktu aktif: -</div>
     </div>
   </div>
 
@@ -230,7 +155,7 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
     <table>
       <thead>
         <tr>
-          <th>Tanggal</th>
+          <th>Tgl</th>
           <th>Imsak</th>
           <th>Subuh</th>
           <th>Dzuhur</th>
@@ -246,120 +171,125 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
 </div>
 
 <script>
-/* ================= LOGIC ================= */
+/* ================= ENGINE LOGIC ================= */
 const tvToggle = document.getElementById('tvToggle');
+let imsakiyahData = [];
+let tablePage = 0;
+
 tvToggle.addEventListener('click', () => {
   document.body.classList.toggle('tv-mode');
   if(document.body.classList.contains('tv-mode')) document.documentElement.requestFullscreen?.();
 });
 
-const lat=-7.4242, lon=109.2396, method=20, school=0;
-let ramadhanData=[], todayPrayers=[], tablePage=0;
-
-async function init(){
-  const year=new Date().getFullYear();
-  for(let m=2;m<=3;m++){
-    const res=await fetch(`https://api.aladhan.com/v1/calendar?latitude=${lat}&longitude=${lon}&method=${method}&school=${school}&month=${m}&year=${year}`);
-    const data=await res.json();
-    if(data.code===200) data.data.forEach(d=>{
-      const [dd, mm] = d.date.gregorian.date.split('-').map(Number);
-      if(d.date.hijri.month.number === 9 || (mm === 3 && dd <= 21)) ramadhanData.push(d);
-    });
+// Load data dari imsakiyah.json
+async function loadData() {
+  try {
+    const response = await fetch('imsakiyah.json');
+    const json = await response.json();
+    imsakiyahData = json.data; // Mengambil array data jadwal
+    init();
+  } catch (error) {
+    console.error("Gagal memuat file imsakiyah.json:", error);
+    document.getElementById('bigDate').textContent = "Error Load JSON";
   }
-  updateDisplayEngine();
-  setInterval(updateDisplayEngine, 1000);
-  setInterval(changeTablePage, 25000); 
 }
 
-function updateDisplayEngine(){
+function init(){
+  updateEngine();
+  setInterval(updateEngine, 1000);
+  setInterval(() => {
+    tablePage++;
+    renderTable();
+  }, 25000);
+}
+
+// Helper untuk format tanggal sistem ke format "DD MMM" agar sinkron dengan JSON
+function getSysDateStr(dateObj) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    return `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]}`;
+}
+
+function updateEngine(){
   const now = new Date();
   document.getElementById('smallClock').textContent = formatClock(now);
   document.getElementById('bigDate').textContent = now.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long'});
   
-  renderTable(now);
-  handlePrayersAndCountdown(now);
+  renderTable();
+  handleCountdown(now);
 }
 
-function renderTable(now){
+function renderTable(){
   const tbody = document.getElementById('tbody');
-  const yesterdayLimit = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+  const now = new Date();
+  const todayStr = getSysDateStr(now);
+  
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const yesterdayStr = getSysDateStr(yesterday);
 
-  const activeData = ramadhanData.filter(d => {
-    const [dd, mm, yyyy] = d.date.gregorian.date.split('-').map(Number);
-    const itemDate = new Date(yyyy, mm - 1, dd).getTime();
-    return itemDate >= yesterdayLimit;
+  // Filter Rolling: Mulai dari hari kemarin
+  const activeData = imsakiyahData.filter(d => {
+      const idxToday = imsakiyahData.findIndex(item => item.tgl === todayStr);
+      const idxYest = imsakiyahData.findIndex(item => item.tgl === yesterdayStr);
+      const startIdx = idxYest !== -1 ? idxYest : (idxToday !== -1 ? idxToday : 0);
+      return imsakiyahData.indexOf(d) >= startIdx;
   });
 
-  // Hanya render ulang jika perlu atau saat pindah halaman
-  const start = tablePage * 10;
-  const slice = activeData.slice(start, start + 10);
+  const maxPages = Math.ceil(activeData.length / 10);
+  if (tablePage >= maxPages) tablePage = 0;
 
-  if (tbody.dataset.page != tablePage || tbody.dataset.lastDate != now.getDate()){
-      tbody.innerHTML = '';
-      slice.forEach(d => {
-        const tr = document.createElement('tr');
-        const [dd, mm] = d.date.gregorian.date.split('-').map(Number);
-        if(dd === now.getDate() && mm === (now.getMonth() + 1)) tr.classList.add('today');
+  const slice = activeData.slice(tablePage * 10, (tablePage * 10) + 10);
+  
+  tbody.innerHTML = '';
+  slice.forEach(d => {
+    const tr = document.createElement('tr');
+    if(d.tgl === todayStr) tr.classList.add('today');
 
-        let labelDate = d.date.readable.split(' ').slice(0, 2).join(' ');
-        if(mm === 3 && (dd === 20 || dd === 21)) { tr.classList.add('eid-day'); labelDate += " (Estimated Eid day)"; }
+    // Penanda Lebaran
+    if(d.tgl === "20 Mar") {
+        tr.classList.add('eid-day');
+    }
 
-        tr.innerHTML = `<td>${labelDate}</td><td>${clean(d.timings.Imsak)}</td><td>${clean(d.timings.Fajr)}</td><td>${clean(d.timings.Dhuhr)}</td><td>${clean(d.timings.Asr)}</td><td>${clean(d.timings.Maghrib)}</td><td>${clean(d.timings.Isha)}</td>`;
-        tbody.appendChild(tr);
-      });
-      tbody.dataset.page = tablePage;
-      tbody.dataset.lastDate = now.getDate();
-  }
+    tr.innerHTML = `<td>${d.tgl}</td><td>${d.imsak}</td><td>${d.subuh}</td><td>${d.dzuhur}</td><td>${d.ashar}</td><td>${d.maghrib}</td><td>${d.isya}</td>`;
+    tbody.appendChild(tr);
+  });
 }
 
-function changeTablePage(){
-  const now = new Date();
-  const yesterdayLimit = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
-  const activeCount = ramadhanData.filter(d => {
-    const [dd, mm, yyyy] = d.date.gregorian.date.split('-').map(Number);
-    return new Date(yyyy, mm - 1, dd).getTime() >= yesterdayLimit;
-  }).length;
-
-  tablePage = (tablePage * 10 >= activeCount - 10) ? 0 : tablePage + 1;
-}
-
-function handlePrayersAndCountdown(now){
-  const todayStr = `${String(now.getDate()).padStart(2,'0')}-${String(now.getMonth()+1).padStart(2,'0')}-${now.getFullYear()}`;
+function handleCountdown(now){
+  const todayStr = getSysDateStr(now);
   const tomorrow = new Date(now);
   tomorrow.setDate(now.getDate() + 1);
-  const tomorrowStr = `${String(tomorrow.getDate()).padStart(2,'0')}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${tomorrow.getFullYear()}`;
+  const tomorrowStr = getSysDateStr(tomorrow);
 
-  const dToday = ramadhanData.find(d => d.date.gregorian.date === todayStr);
-  const dTomorrow = ramadhanData.find(d => d.date.gregorian.date === tomorrowStr);
+  const dToday = imsakiyahData.find(d => d.tgl === todayStr);
+  const dTomorrow = imsakiyahData.find(d => d.tgl === tomorrowStr);
 
   if(!dToday) return;
 
-  // Hijri update
-  document.getElementById('hijriDate').textContent = `${dToday.date.hijri.day} ${dToday.date.hijri.month.en} ${dToday.date.hijri.year} H`;
+  // Update Hijriah berdasarkan field "ramadhan" di JSON
+  document.getElementById('hijriDate').textContent = `${dToday.ramadhan} Ramadhan 1447 H`;
 
   const prayers = [
-    {name:'Imsak', time:parseT(todayStr, dToday.timings.Imsak)},
-    {name:'Subuh', time:parseT(todayStr, dToday.timings.Fajr)},
-    {name:'Dzuhur', time:parseT(todayStr, dToday.timings.Dhuhr)},
-    {name:'Ashar', time:parseT(todayStr, dToday.timings.Asr)},
-    {name:'Maghrib', time:parseT(todayStr, dToday.timings.Maghrib)},
-    {name:'Isya', time:parseT(todayStr, dToday.timings.Isha)}
+    {name:'Imsak', time: parseT(dToday.tgl, dToday.imsak)},
+    {name:'Subuh', time: parseT(dToday.tgl, dToday.subuh)},
+    {name:'Dzuhur', time: parseT(dToday.tgl, dToday.dzuhur)},
+    {name:'Ashar', time: parseT(dToday.tgl, dToday.ashar)},
+    {name:'Maghrib', time: parseT(dToday.tgl, dToday.maghrib)},
+    {name:'Isya', time: parseT(dToday.tgl, dToday.isya)}
   ];
 
-  // Update Status Aktif
   document.getElementById('activeIndicator').textContent = getStatusText(now, prayers);
 
-  // Cari target berikutnya
   let next = prayers.find(p => p.time > now);
 
-  // JIKA SUDAH LEWAT ISYA, TARGET ADALAH IMSAK BESOK
-  if(!next && dTomorrow){
-    next = {name:'Imsak', time:parseT(tomorrowStr, dTomorrow.timings.Imsak)};
+  // Jika sudah lewat Isya hari ini, target berikutnya adalah Imsak Besok
+  if(!next && dTomorrow) {
+    next = {name:'Imsak', time: parseT(dTomorrow.tgl, dTomorrow.imsak)};
   }
 
   const mainTime = document.getElementById('mainTime');
   const nextLabel = document.getElementById('nextLabel');
-  const oneHour = 60 * 60 * 1000;
+  const oneHour = 3600000;
 
   if(next){
     const diff = next.time - now;
@@ -371,13 +301,13 @@ function handlePrayersAndCountdown(now){
       nextLabel.textContent = 'Menuju ' + next.name;
       mainTime.textContent = formatDiff(diff);
       mainTime.style.color = "var(--primary)";
-      if(diff <= 1000) triggerAdzan(next.name);
+      if(diff <= 1000 && diff > 0) triggerAdzan(next.name);
     }
   }
 }
 
 function getStatusText(now, prayers){
-  const limit = 3 * 60 * 1000;
+  const limit = 180000; // 3 Menit
   for(let i = prayers.length - 1; i >= 0; i--){
     const diff = now - prayers[i].time;
     if(diff >= 0) return (diff > limit) ? 'Waktu aktif: -' : 'Waktu aktif: ' + prayers[i].name;
@@ -385,13 +315,14 @@ function getStatusText(now, prayers){
   return 'Waktu aktif: -';
 }
 
-function parseT(dateStr, timeStr){
-  const [dd, mm, yyyy] = dateStr.split('-').map(Number);
-  const [h, m] = clean(timeStr).split(':').map(Number);
-  return new Date(yyyy, mm-1, dd, h, m, 0);
+function parseT(tglStr, timeHM){
+  const [d, mStr] = tglStr.split(' ');
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const m = months.indexOf(mStr);
+  const [hh, mm] = timeHM.split(':').map(Number);
+  return new Date(2026, m, parseInt(d), hh, mm, 0); // Sesuai tahun project 2026
 }
 
-function clean(t){return t.replace(/\s*\(.+\)/,'').trim();}
 function formatClock(d){
   return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
 }
@@ -406,7 +337,8 @@ function triggerAdzan(name){
   setTimeout(()=>document.getElementById('overlay').classList.remove('show'),15000);
 }
 
-init();
+// Memulai proses loading data
+loadData();
 </script>
 </body>
 </html>
