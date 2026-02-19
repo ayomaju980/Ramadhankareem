@@ -302,7 +302,7 @@ function renderTable(now){
         if(dd === now.getDate() && mm === (now.getMonth() + 1)) tr.classList.add('today');
 
         let labelDate = d.date.readable.split(' ').slice(0, 2).join(' ');
-        if(mm === 3 && (dd === 20 || dd === 21)) { tr.classList.add('eid-day'); labelDate += " (Eid)"; }
+        if(mm === 3 && (dd === 20 || dd === 21)) { tr.classList.add('eid-day'); labelDate += " (Estimated Eid day)"; }
 
         tr.innerHTML = `<td>${labelDate}</td><td>${clean(d.timings.Imsak)}</td><td>${clean(d.timings.Fajr)}</td><td>${clean(d.timings.Dhuhr)}</td><td>${clean(d.timings.Asr)}</td><td>${clean(d.timings.Maghrib)}</td><td>${clean(d.timings.Isha)}</td>`;
         tbody.appendChild(tr);
