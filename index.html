@@ -197,10 +197,11 @@ async function loadData() {
 function init(){
   updateEngine();
   setInterval(updateEngine, 1000);
+  // Waktu ganti data tabel dipercepat menjadi 15 detik sekali
   setInterval(() => {
     tablePage++;
     renderTable();
-  }, 25000);
+  }, 15000);
 }
 
 // Helper untuk format tanggal sistem ke format "DD MMM" agar sinkron dengan JSON
@@ -307,7 +308,8 @@ function handleCountdown(now){
 }
 
 function getStatusText(now, prayers){
-  const limit = 180000; // 3 Menit
+  // Durasi Waktu aktif diperlama menjadi 5 Menit (300.000 ms)
+  const limit = 300000; 
   for(let i = prayers.length - 1; i >= 0; i--){
     const diff = now - prayers[i].time;
     if(diff >= 0) return (diff > limit) ? 'Waktu aktif: -' : 'Waktu aktif: ' + prayers[i].name;
@@ -337,7 +339,7 @@ function triggerAdzan(name){
   setTimeout(()=>document.getElementById('overlay').classList.remove('show'),15000);
 }
 
-// Memulai proses loading data
+// Memulai proses loading data dari imsakiyah.json
 loadData();
 </script>
 </body>
