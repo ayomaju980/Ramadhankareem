@@ -167,7 +167,6 @@ td{
   text-align: center;
 }
 
-/* Highlight Hari Ini */
 tr.today {
   background: rgba(34, 211, 238, 0.2) !important;
   box-shadow: inset 6px 0 0 var(--primary);
@@ -222,7 +221,7 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
     <div style="margin-top:auto; margin-bottom:auto">
       <div class="countdown-label" id="nextLabel">Waktu Sekarang</div>
       <div class="main-time" id="mainTime">--:--:--</div>
-      <div class="active-indicator" id="activeIndicator">Data Aktif: -</div>
+      <div class="active-indicator" id="activeIndicator">Waktu aktif: -</div>
     </div>
   </div>
 
@@ -267,146 +266,144 @@ async function init(){
       if(d.date.hijri.month.number === 9 || (mm === 3 && dd <= 21)) ramadhanData.push(d);
     });
   }
-  renderTable(); 
-  prepareToday();
+  updateDisplayEngine();
+  setInterval(updateDisplayEngine, 1000);
   setInterval(changeTablePage, 25000); 
 }
 
-function renderTable(){
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  tbody.classList.add('fade');
-  
+function updateDisplayEngine(){
   const now = new Date();
-  // Hitung waktu 24 jam yang lalu (untuk menyertakan kemarin)
+  document.getElementById('smallClock').textContent = formatClock(now);
+  document.getElementById('bigDate').textContent = now.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long'});
+  
+  renderTable(now);
+  handlePrayersAndCountdown(now);
+}
+
+function renderTable(now){
+  const tbody = document.getElementById('tbody');
   const yesterdayLimit = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
 
-  // FILTER: Ambil data mulai dari kemarin (T-1) sampai masa depan
   const activeData = ramadhanData.filter(d => {
     const [dd, mm, yyyy] = d.date.gregorian.date.split('-').map(Number);
     const itemDate = new Date(yyyy, mm - 1, dd).getTime();
     return itemDate >= yesterdayLimit;
   });
 
+  // Hanya render ulang jika perlu atau saat pindah halaman
   const start = tablePage * 10;
   const slice = activeData.slice(start, start + 10);
 
-  if (slice.length === 0 && tablePage > 0) {
-    tablePage = 0;
-    renderTable();
-    return;
+  if (tbody.dataset.page != tablePage || tbody.dataset.lastDate != now.getDate()){
+      tbody.innerHTML = '';
+      slice.forEach(d => {
+        const tr = document.createElement('tr');
+        const [dd, mm] = d.date.gregorian.date.split('-').map(Number);
+        if(dd === now.getDate() && mm === (now.getMonth() + 1)) tr.classList.add('today');
+
+        let labelDate = d.date.readable.split(' ').slice(0, 2).join(' ');
+        if(mm === 3 && (dd === 20 || dd === 21)) { tr.classList.add('eid-day'); labelDate += " (Eid)"; }
+
+        tr.innerHTML = `<td>${labelDate}</td><td>${clean(d.timings.Imsak)}</td><td>${clean(d.timings.Fajr)}</td><td>${clean(d.timings.Dhuhr)}</td><td>${clean(d.timings.Asr)}</td><td>${clean(d.timings.Maghrib)}</td><td>${clean(d.timings.Isha)}</td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.dataset.page = tablePage;
+      tbody.dataset.lastDate = now.getDate();
   }
-
-  slice.forEach(d => {
-    const tr = document.createElement('tr');
-    const [dd, mm] = d.date.gregorian.date.split('-').map(Number);
-    
-    // Highlight Hanya Hari Ini
-    if(dd === now.getDate() && mm === (now.getMonth() + 1)) {
-        tr.classList.add('today');
-    }
-
-    let labelDate = d.date.readable.split(' ').slice(0, 2).join(' ');
-    if(mm === 3 && (dd === 20 || dd === 21)) { 
-      tr.classList.add('eid-day'); 
-      labelDate += " (Eid)"; 
-    }
-
-    tr.innerHTML = `<td>${labelDate}</td><td>${clean(d.timings.Imsak)}</td><td>${clean(d.timings.Fajr)}</td><td>${clean(d.timings.Dhuhr)}</td><td>${clean(d.timings.Asr)}</td><td>${clean(d.timings.Maghrib)}</td><td>${clean(d.timings.Isha)}</td>`;
-    tbody.appendChild(tr);
-  });
-  setTimeout(()=>tbody.classList.remove('fade'),600);
 }
 
 function changeTablePage(){
   const now = new Date();
   const yesterdayLimit = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
-  
   const activeCount = ramadhanData.filter(d => {
     const [dd, mm, yyyy] = d.date.gregorian.date.split('-').map(Number);
-    const itemDate = new Date(yyyy, mm - 1, dd).getTime();
-    return itemDate >= yesterdayLimit;
+    return new Date(yyyy, mm - 1, dd).getTime() >= yesterdayLimit;
   }).length;
 
-  tablePage++;
-  if(tablePage * 10 >= activeCount) tablePage = 0;
-  renderTable();
+  tablePage = (tablePage * 10 >= activeCount - 10) ? 0 : tablePage + 1;
+}
+
+function handlePrayersAndCountdown(now){
+  const todayStr = `${String(now.getDate()).padStart(2,'0')}-${String(now.getMonth()+1).padStart(2,'0')}-${now.getFullYear()}`;
+  const tomorrow = new Date(now);
+  tomorrow.setDate(now.getDate() + 1);
+  const tomorrowStr = `${String(tomorrow.getDate()).padStart(2,'0')}-${String(tomorrow.getMonth()+1).padStart(2,'0')}-${tomorrow.getFullYear()}`;
+
+  const dToday = ramadhanData.find(d => d.date.gregorian.date === todayStr);
+  const dTomorrow = ramadhanData.find(d => d.date.gregorian.date === tomorrowStr);
+
+  if(!dToday) return;
+
+  // Hijri update
+  document.getElementById('hijriDate').textContent = `${dToday.date.hijri.day} ${dToday.date.hijri.month.en} ${dToday.date.hijri.year} H`;
+
+  const prayers = [
+    {name:'Imsak', time:parseT(todayStr, dToday.timings.Imsak)},
+    {name:'Subuh', time:parseT(todayStr, dToday.timings.Fajr)},
+    {name:'Dzuhur', time:parseT(todayStr, dToday.timings.Dhuhr)},
+    {name:'Ashar', time:parseT(todayStr, dToday.timings.Asr)},
+    {name:'Maghrib', time:parseT(todayStr, dToday.timings.Maghrib)},
+    {name:'Isya', time:parseT(todayStr, dToday.timings.Isha)}
+  ];
+
+  // Update Status Aktif
+  document.getElementById('activeIndicator').textContent = getStatusText(now, prayers);
+
+  // Cari target berikutnya
+  let next = prayers.find(p => p.time > now);
+
+  // JIKA SUDAH LEWAT ISYA, TARGET ADALAH IMSAK BESOK
+  if(!next && dTomorrow){
+    next = {name:'Imsak', time:parseT(tomorrowStr, dTomorrow.timings.Imsak)};
+  }
+
+  const mainTime = document.getElementById('mainTime');
+  const nextLabel = document.getElementById('nextLabel');
+  const oneHour = 60 * 60 * 1000;
+
+  if(next){
+    const diff = next.time - now;
+    if(diff > oneHour){
+      nextLabel.textContent = 'Waktu Sekarang';
+      mainTime.textContent = formatClock(now);
+      mainTime.style.color = "var(--text)";
+    } else {
+      nextLabel.textContent = 'Menuju ' + next.name;
+      mainTime.textContent = formatDiff(diff);
+      mainTime.style.color = "var(--primary)";
+      if(diff <= 1000) triggerAdzan(next.name);
+    }
+  }
+}
+
+function getStatusText(now, prayers){
+  const limit = 3 * 60 * 1000;
+  for(let i = prayers.length - 1; i >= 0; i--){
+    const diff = now - prayers[i].time;
+    if(diff >= 0) return (diff > limit) ? 'Waktu aktif: -' : 'Waktu aktif: ' + prayers[i].name;
+  }
+  return 'Waktu aktif: -';
+}
+
+function parseT(dateStr, timeStr){
+  const [dd, mm, yyyy] = dateStr.split('-').map(Number);
+  const [h, m] = clean(timeStr).split(':').map(Number);
+  return new Date(yyyy, mm-1, dd, h, m, 0);
 }
 
 function clean(t){return t.replace(/\s*\(.+\)/,'').trim();}
-
-function prepareToday(){
-  const now=new Date();
-  document.getElementById('bigDate').textContent=now.toLocaleDateString('id-ID',{weekday:'long', day:'numeric', month:'long'});
-  const today=ramadhanData.find(d=>{
-    const [dd,mm]=d.date.gregorian.date.split('-').map(Number);
-    return dd===now.getDate()&&mm===now.getMonth()+1;
-  });
-  if(!today) return;
-  document.getElementById('hijriDate').textContent=`${today.date.hijri.day} ${today.date.hijri.month.en} ${today.date.hijri.year} H`;
-  const [dd,mm,yyyy]=today.date.gregorian.date.split('-').map(Number);
-  todayPrayers=[
-    {name:'Imsak',time:clean(today.timings.Imsak)},
-    {name:'Subuh',time:clean(today.timings.Fajr)},
-    {name:'Dzuhur',time:clean(today.timings.Dhuhr)},
-    {name:'Ashar',time:clean(today.timings.Asr)},
-    {name:'Maghrib',time:clean(today.timings.Maghrib)},
-    {name:'Isya',time:clean(today.timings.Isha)}
-  ].map(p=>{
-    const [h,m]=p.time.split(':').map(Number);
-    return {...p,date:new Date(yyyy,mm-1,dd,h,m,0)};
-  });
-  setInterval(updateDisplay,1000);
+function formatClock(d){
+  return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
 }
-
-function updateDisplay(){
-  const now=new Date();
-  const mainTime=document.getElementById('mainTime');
-  const nextLabel=document.getElementById('nextLabel');
-  document.getElementById('smallClock').textContent=formatClock(now);
-  document.getElementById('activeIndicator').textContent = getStatusText(now);
-
-  const next=todayPrayers.find(p=>p.date > now);
-  const oneHour = 60 * 60 * 1000;
-
-  if(next && (next.date - now > oneHour)){
-    nextLabel.textContent = 'Waktu Sekarang';
-    mainTime.textContent = formatClock(now);
-    mainTime.style.color = "var(--text)";
-  } 
-  else if(next){
-    nextLabel.textContent = 'Menuju ' + next.name;
-    mainTime.textContent = format(next.date - now);
-    mainTime.style.color = "var(--primary)";
-    if(next.date-now <= 1000) triggerAdzan(next.name);
-  } else {
-    nextLabel.textContent = 'Waktu Sekarang';
-    mainTime.textContent = formatClock(now);
-  }
-}
-
-function getStatusText(now){
-  const limit = 3 * 60 * 1000;
-  for(let i=todayPrayers.length-1; i>=0; i--){
-    const diff = now - todayPrayers[i].date;
-    if(diff >= 0) return (diff > limit) ? 'Waktu aktif: -' : 'Waktu aktif: ' + todayPrayers[i].name;
-  }
-  return 'Waktu aktif: -';
+function formatDiff(ms){
+  const t=Math.floor(ms/1000);
+  return`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor((t%3600)/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
 }
 
 function triggerAdzan(name){
   document.getElementById('overlayName').textContent=name;
   document.getElementById('overlay').classList.add('show');
   setTimeout(()=>document.getElementById('overlay').classList.remove('show'),15000);
-}
-
-function format(ms){
-  const t=Math.floor(ms/1000);
-  return`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor((t%3600)/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
-}
-
-function formatClock(d){
-  return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
 }
 
 init();
