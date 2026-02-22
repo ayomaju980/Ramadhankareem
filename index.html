@@ -140,7 +140,7 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
   <div class="panel">
     <div class="header-row">
       <div>
-        <div class="title">Jadwal Imsakiyah<br>Purwokerto</div>
+        <div class="title">Ramadhan Home<br>Purwokerto</div>
         <div class="big-date" id="bigDate">Memuat...</div>
         <div class="hijri" id="hijriDate" style="color:var(--muted); font-size:14px; margin-top:5px;"></div>
       </div>
@@ -192,7 +192,7 @@ async function loadData() {
   try {
     const response = await fetch('imsakiyah.json');
     const json = await response.json();
-    imsakiyahData = json.data; //
+    imsakiyahData = json.data;
     init();
   } catch (error) {
     console.error("Gagal memuat data:", error);
@@ -205,7 +205,7 @@ function init(){
   setInterval(() => {
     tablePage++;
     renderTable();
-  }, 15000); //
+  }, 15000);
 }
 
 function getSysDateStr(dateObj) {
@@ -264,7 +264,7 @@ function renderTable(){
     const tr = document.createElement('tr');
     if(d.tgl === todayStr) tr.classList.add('today');
 
-    if(d.tgl === "20 Mar") { //
+    if(d.tgl === "20 Mar") {
         tr.classList.add('eid-day');
     }
 
@@ -284,7 +284,7 @@ function handleCountdown(now){
 
   if(!dToday) return;
 
-  document.getElementById('hijriDate').textContent = `${dToday.ramadhan} Ramadhan 1447 H`; //
+  document.getElementById('hijriDate').textContent = `${dToday.ramadhan} Ramadhan 1447 H`;
 
   const prayers = [
     {name:'Imsak', time: parseT(dToday.tgl, dToday.imsak)},
@@ -299,7 +299,7 @@ function handleCountdown(now){
 
   let next = prayers.find(p => p.time > now);
 
-  if(!next && dTomorrow) { //
+  if(!next && dTomorrow) {
     next = {name:'Imsak', time: parseT(dTomorrow.tgl, dTomorrow.imsak)};
   }
 
@@ -323,7 +323,7 @@ function handleCountdown(now){
 }
 
 function getStatusText(now, prayers){
-  const limit = 300000; // 5 Menit
+  const limit = 300000;
   for(let i = prayers.length - 1; i >= 0; i--){
     const diff = now - prayers[i].time;
     if(diff >= 0) return (diff > limit) ? 'Waktu aktif: -' : 'Waktu aktif: ' + prayers[i].name;
@@ -336,7 +336,7 @@ function parseT(tglStr, timeHM){
   const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
   const m = months.indexOf(mStr);
   const [hh, mm] = timeHM.split(':').map(Number);
-  return new Date(2026, m, parseInt(d), hh, mm, 0); //
+  return new Date(2026, m, parseInt(d), hh, mm, 0);
 }
 
 function formatClock(d){
@@ -352,17 +352,17 @@ function triggerAdzan(name){
   const overlayMain = document.getElementById('overlayMain');
   const overlaySub = document.getElementById('overlaySub');
   
-  overlayHeader.textContent = "Saat ini sedang"; //
-  overlayMain.textContent = `Masuk Waktu ${name}`; //
+  overlayHeader.textContent = "Informasi";
+  overlayMain.textContent = `Masuk Waktu ${name}`;
   
   if (name === 'Imsak') {
-    overlaySub.textContent = "Berhenti sahur, persiapan menahan diri"; //
-  } else if (name === 'Maghrib') {
-    overlaySub.textContent = "Selamat berbuka, jangan lupa bersyukur"; //
+    overlaySub.textContent = "Waktunya bersiap untuk memulai puasa";
   } else if (name === 'Subuh') {
-    overlaySub.textContent = "Selamat Berpuasa"; //
-  }else {
-    overlaySub.textContent = "Selamat Berpuasa"; //
+    overlaySub.textContent = "Selamat menjalankan ibadah puasa";
+  } else if (name === 'Maghrib') {
+    overlaySub.textContent = "Waktu berbuka puasa, selamat berbuka puasa";
+  } else {
+    overlaySub.textContent = "";
   }
   
   document.getElementById('overlay').classList.add('show');
