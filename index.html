@@ -31,9 +31,7 @@ body{
   overflow-x:hidden;
 }
 
-body.night-mode {
-  background: var(--bg-night);
-}
+body.night-mode { background: var(--bg-night); }
 
 body::before{
   content:"";
@@ -84,6 +82,20 @@ body.tv-mode .panel{ border-radius:0; height:100vh; display: flex; flex-directio
   font-size:14px;
   font-weight:600;
 }
+
+/* Kotak Pengingat Jadwal Terdekat */
+.next-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.next-box .label { color: var(--muted); font-size: 14px; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+.next-box .val { color: var(--accent); font-size: 20px; font-weight: 800; }
 
 .countdown-label{ text-transform:uppercase; font-size:clamp(14px, 1.2vw, 18px); letter-spacing:4px; color:var(--muted); }
 .main-time{
@@ -151,6 +163,11 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
     </div>
 
     <div style="margin-top:auto; margin-bottom:auto">
+      <div class="next-box" id="nextBox" style="display: none;">
+        <span class="label" id="nextBoxLabel">Jadwal Berikutnya</span>
+        <span class="val" id="nextBoxTime">--:--</span>
+      </div>
+
       <div class="countdown-label" id="nextLabel">Waktu Sekarang</div>
       <div class="main-time" id="mainTime">--:--:--</div>
       <div id="activeIndicator" class="active-indicator">Waktu aktif: -</div>
@@ -178,7 +195,6 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
 </div>
 
 <script>
-/* ================= ENGINE LOGIC ================= */
 const tvToggle = document.getElementById('tvToggle');
 let imsakiyahData = [];
 let tablePage = 0;
@@ -264,9 +280,7 @@ function renderTable(){
     const tr = document.createElement('tr');
     if(d.tgl === todayStr) tr.classList.add('today');
 
-    if(d.tgl === "20 Mar") {
-        tr.classList.add('eid-day');
-    }
+    if(d.tgl === "20 Mar") { tr.classList.add('eid-day'); }
 
     tr.innerHTML = `<td>${d.tgl}</td><td>${d.imsak}</td><td>${d.subuh}</td><td>${d.dzuhur}</td><td>${d.ashar}</td><td>${d.maghrib}</td><td>${d.isya}</td>`;
     tbody.appendChild(tr);
@@ -287,12 +301,12 @@ function handleCountdown(now){
   document.getElementById('hijriDate').textContent = `${dToday.ramadhan} Ramadhan 1447 H`;
 
   const prayers = [
-    {name:'Imsak', time: parseT(dToday.tgl, dToday.imsak)},
-    {name:'Subuh', time: parseT(dToday.tgl, dToday.subuh)},
-    {name:'Dzuhur', time: parseT(dToday.tgl, dToday.dzuhur)},
-    {name:'Ashar', time: parseT(dToday.tgl, dToday.ashar)},
-    {name:'Maghrib', time: parseT(dToday.tgl, dToday.maghrib)},
-    {name:'Isya', time: parseT(dToday.tgl, dToday.isya)}
+    {name:'Imsak', time: parseT(dToday.tgl, dToday.imsak), raw: dToday.imsak},
+    {name:'Subuh', time: parseT(dToday.tgl, dToday.subuh), raw: dToday.subuh},
+    {name:'Dzuhur', time: parseT(dToday.tgl, dToday.dzuhur), raw: dToday.dzuhur},
+    {name:'Ashar', time: parseT(dToday.tgl, dToday.ashar), raw: dToday.ashar},
+    {name:'Maghrib', time: parseT(dToday.tgl, dToday.maghrib), raw: dToday.maghrib},
+    {name:'Isya', time: parseT(dToday.tgl, dToday.isya), raw: dToday.isya}
   ];
 
   document.getElementById('activeIndicator').textContent = getStatusText(now, prayers);
@@ -300,15 +314,24 @@ function handleCountdown(now){
   let next = prayers.find(p => p.time > now);
 
   if(!next && dTomorrow) {
-    next = {name:'Imsak', time: parseT(dTomorrow.tgl, dTomorrow.imsak)};
+    next = {name:'Imsak', time: parseT(dTomorrow.tgl, dTomorrow.imsak), raw: dTomorrow.imsak};
   }
 
   const mainTime = document.getElementById('mainTime');
   const nextLabel = document.getElementById('nextLabel');
+  const nextBox = document.getElementById('nextBox');
+  const nextBoxLabel = document.getElementById('nextBoxLabel');
+  const nextBoxTime = document.getElementById('nextBoxTime');
   const oneHour = 3600000;
 
   if(next){
     const diff = next.time - now;
+    
+    // Tampilkan Next Schedule Box
+    nextBox.style.display = 'inline-flex';
+    nextBoxLabel.textContent = next.name;
+    nextBoxTime.textContent = next.raw;
+
     if(diff > oneHour){
       nextLabel.textContent = 'Waktu Sekarang';
       mainTime.textContent = formatClock(now);
@@ -319,6 +342,8 @@ function handleCountdown(now){
       mainTime.style.color = "var(--primary)";
       if(diff <= 1000 && diff > 0) triggerAdzan(next.name);
     }
+  } else {
+    nextBox.style.display = 'none';
   }
 }
 
@@ -360,7 +385,7 @@ function triggerAdzan(name){
   } else if (name === 'Subuh') {
     overlaySub.textContent = "Selamat menjalankan ibadah puasa";
   } else if (name === 'Maghrib') {
-    overlaySub.textContent = "Waktu berbuka puasa, selamat berbuka puasa";
+    overlaySub.textContent = "Alhamdulillah, selamat berbuka puasa";
   } else {
     overlaySub.textContent = "";
   }
