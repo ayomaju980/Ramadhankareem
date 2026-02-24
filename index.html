@@ -83,7 +83,6 @@ body.tv-mode .panel{ border-radius:0; height:100vh; display: flex; flex-directio
   font-weight:600;
 }
 
-/* Kotak Pengingat Jadwal Terdekat */
 .next-box {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -126,10 +125,6 @@ td{ padding:clamp(10px, 1.2vh, 18px) 10px; border-bottom:1px solid rgba(255,255,
 
 tr.today { background: rgba(34, 211, 238, 0.2) !important; box-shadow: inset 6px 0 0 var(--primary); }
 tr.today td { font-weight: 700; color: var(--primary); }
-tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
-
-.fade{ animation:fadeSlide .6s ease; }
-@keyframes fadeSlide{ from{opacity:0; transform:translateX(20px);} to{opacity:1; transform:translateX(0);} }
 
 .overlay{
   position:fixed; inset:0; background:rgba(15, 23, 42, 0.98);
@@ -152,9 +147,9 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
   <div class="panel">
     <div class="header-row">
       <div>
-        <div class="title">Ramadhan Home<br>Purwokerto</div>
+        <div class="title" id="locTitle">Jadwal Imsakiyah<br>Purwokerto</div>
         <div class="big-date" id="bigDate">Memuat...</div>
-        <div class="hijri" id="hijriDate" style="color:var(--muted); font-size:14px; margin-top:5px;"></div>
+        <div class="hijri" id="hijriDate"></div>
       </div>
       <div style="text-align:right">
         <div class="small-clock" id="smallClock">00:00:00</div>
@@ -195,38 +190,63 @@ tr.eid-day td:first-child{ color:var(--accent); font-weight:800; }
 </div>
 
 <script>
-const tvToggle = document.getElementById('tvToggle');
 let imsakiyahData = [];
 let tablePage = 0;
-
-tvToggle.addEventListener('click', () => {
-  document.body.classList.toggle('tv-mode');
-  if(document.body.classList.contains('tv-mode')) document.documentElement.requestFullscreen?.();
-});
+let isUsingAPI = false;
 
 async function loadData() {
-  try {
-    const response = await fetch('imsakiyah.json');
-    const json = await response.json();
-    imsakiyahData = json.data;
-    init();
-  } catch (error) {
-    console.error("Gagal memuat data:", error);
+  const now = new Date();
+  const limitDate = new Date(2026, 2, 20, 23, 59, 59);
+
+  if (now > limitDate) {
+    isUsingAPI = true;
+    // Otomatis ubah judul ke Jadwal Sholat
+    document.getElementById('locTitle').innerHTML = "Jadwal Sholat<br>Purwokerto";
+    await loadFromAPI();
+  } else {
+    try {
+      const response = await fetch('imsakiyah.json');
+      const json = await response.json();
+      imsakiyahData = json.data;
+      // Judul Ramadhan
+      document.getElementById('locTitle').innerHTML = "Jadwal Imsakiyah<br>Purwokerto";
+      init();
+    } catch (e) {
+      await loadFromAPI();
+    }
   }
+}
+
+async function loadFromAPI() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const url = `https://api.aladhan.com/v1/calendar?latitude=-7.4244&longitude=109.2302&method=11&month=${month}&year=${year}`;
+
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    imsakiyahData = json.data.map(item => {
+      return {
+        tgl: `${item.date.gregorian.day} ${item.date.gregorian.month.en.substring(0,3)}`,
+        ramadhan: item.date.hijri.day,
+        imsak: item.timings.Imsak.split(' ')[0],
+        subuh: item.timings.Fajr.split(' ')[0],
+        dzuhur: item.timings.Dhuhr.split(' ')[0],
+        ashar: item.timings.Asr.split(' ')[0],
+        maghrib: item.timings.Maghrib.split(' ')[0],
+        isya: item.timings.Isha.split(' ')[0],
+        hijriFormatted: `${item.date.hijri.day} ${item.date.hijri.month.en} ${item.date.hijri.year}`
+      };
+    });
+    init();
+  } catch (err) { console.error(err); }
 }
 
 function init(){
   updateEngine();
   setInterval(updateEngine, 1000);
-  setInterval(() => {
-    tablePage++;
-    renderTable();
-  }, 15000);
-}
-
-function getSysDateStr(dateObj) {
-    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-    return `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]}`;
+  setInterval(() => { tablePage++; renderTable(); }, 15000);
 }
 
 function updateEngine(){
@@ -239,19 +259,9 @@ function updateEngine(){
   updateBackgroundMode(now);
 }
 
-function updateBackgroundMode(now) {
-  const todayStr = getSysDateStr(now);
-  const dToday = imsakiyahData.find(d => d.tgl === todayStr);
-  if (!dToday) return;
-
-  const subuh = parseT(dToday.tgl, dToday.subuh);
-  const maghrib = parseT(dToday.tgl, dToday.maghrib);
-
-  if (now >= subuh && now < maghrib) {
-    document.body.classList.remove('night-mode');
-  } else {
-    document.body.classList.add('night-mode');
-  }
+function getSysDateStr(dateObj) {
+    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    return `${String(dateObj.getDate()).padStart(2, '0')} ${months[dateObj.getMonth()]}`;
 }
 
 function renderTable(){
@@ -272,16 +282,12 @@ function renderTable(){
 
   const maxPages = Math.ceil(activeData.length / 10);
   if (tablePage >= maxPages) tablePage = 0;
-
   const slice = activeData.slice(tablePage * 10, (tablePage * 10) + 10);
   
   tbody.innerHTML = '';
   slice.forEach(d => {
     const tr = document.createElement('tr');
     if(d.tgl === todayStr) tr.classList.add('today');
-
-    if(d.tgl === "20 Mar") { tr.classList.add('eid-day'); }
-
     tr.innerHTML = `<td>${d.tgl}</td><td>${d.imsak}</td><td>${d.subuh}</td><td>${d.dzuhur}</td><td>${d.ashar}</td><td>${d.maghrib}</td><td>${d.isya}</td>`;
     tbody.appendChild(tr);
   });
@@ -289,16 +295,11 @@ function renderTable(){
 
 function handleCountdown(now){
   const todayStr = getSysDateStr(now);
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const tomorrowStr = getSysDateStr(tomorrow);
-
   const dToday = imsakiyahData.find(d => d.tgl === todayStr);
-  const dTomorrow = imsakiyahData.find(d => d.tgl === tomorrowStr);
-
   if(!dToday) return;
 
-  document.getElementById('hijriDate').textContent = `${dToday.ramadhan} Ramadhan 1447 H`;
+  if(isUsingAPI) document.getElementById('hijriDate').textContent = dToday.hijriFormatted;
+  else document.getElementById('hijriDate').textContent = `${dToday.ramadhan} Ramadhan 1447 H`;
 
   const prayers = [
     {name:'Imsak', time: parseT(dToday.tgl, dToday.imsak), raw: dToday.imsak},
@@ -311,42 +312,51 @@ function handleCountdown(now){
 
   document.getElementById('activeIndicator').textContent = getStatusText(now, prayers);
 
-  let next = prayers.find(p => p.time > now);
-
-  if(!next && dTomorrow) {
-    next = {name:'Imsak', time: parseT(dTomorrow.tgl, dTomorrow.imsak), raw: dTomorrow.imsak};
-  }
+  let nextInToday = prayers.find(p => p.time > now);
 
   const mainTime = document.getElementById('mainTime');
   const nextLabel = document.getElementById('nextLabel');
   const nextBox = document.getElementById('nextBox');
   const nextBoxLabel = document.getElementById('nextBoxLabel');
   const nextBoxTime = document.getElementById('nextBoxTime');
-  const oneHour = 3600000;
 
-  if(next){
-    const diff = next.time - now;
-    
-    // Tampilkan Next Schedule Box
+  if(nextInToday){
     nextBox.style.display = 'inline-flex';
-    nextBoxLabel.textContent = next.name;
-    nextBoxTime.textContent = next.raw;
+    nextBoxLabel.textContent = nextInToday.name;
+    nextBoxTime.textContent = nextInToday.raw;
 
-    if(diff > oneHour){
+    const diff = nextInToday.time - now;
+    if(diff > 3600000){
       nextLabel.textContent = 'Waktu Sekarang';
       mainTime.textContent = formatClock(now);
       mainTime.style.color = "var(--text)";
     } else {
-      nextLabel.textContent = 'Menuju ' + next.name;
+      nextLabel.textContent = 'Menuju ' + nextInToday.name;
       mainTime.textContent = formatDiff(diff);
       mainTime.style.color = "var(--primary)";
-      if(diff <= 1000 && diff > 0) triggerAdzan(next.name);
+      if(diff <= 1000 && diff > 0) triggerAdzan(nextInToday.name);
     }
   } else {
     nextBox.style.display = 'none';
+    nextLabel.textContent = 'Waktu Sekarang';
+    mainTime.textContent = formatClock(now);
+    mainTime.style.color = "var(--text)";
   }
 }
 
+function parseT(tglStr, timeHM){
+  const [d, mStr] = tglStr.split(' ');
+  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const m = months.indexOf(mStr);
+  const [hh, mm] = timeHM.split(':').map(Number);
+  const now = new Date();
+  return new Date(now.getFullYear(), m, parseInt(d), hh, mm, 0);
+}
+function formatClock(d){ return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`; }
+function formatDiff(ms){
+  const t=Math.floor(ms/1000);
+  return`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor((t%3600)/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+}
 function getStatusText(now, prayers){
   const limit = 300000;
   for(let i = prayers.length - 1; i >= 0; i--){
@@ -355,44 +365,33 @@ function getStatusText(now, prayers){
   }
   return 'Waktu aktif: -';
 }
-
-function parseT(tglStr, timeHM){
-  const [d, mStr] = tglStr.split(' ');
-  const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-  const m = months.indexOf(mStr);
-  const [hh, mm] = timeHM.split(':').map(Number);
-  return new Date(2026, m, parseInt(d), hh, mm, 0);
+function updateBackgroundMode(now) {
+  const todayStr = getSysDateStr(now);
+  const dToday = imsakiyahData.find(d => d.tgl === todayStr);
+  if (!dToday) return;
+  const subuh = parseT(dToday.tgl, dToday.subuh);
+  const maghrib = parseT(dToday.tgl, dToday.maghrib);
+  if (now >= subuh && now < maghrib) document.body.classList.remove('night-mode');
+  else document.body.classList.add('night-mode');
 }
-
-function formatClock(d){
-  return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
-}
-function formatDiff(ms){
-  const t=Math.floor(ms/1000);
-  return`${String(Math.floor(t/3600)).padStart(2,'0')}:${String(Math.floor((t%3600)/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
-}
-
 function triggerAdzan(name){
   const overlayHeader = document.getElementById('overlayHeader');
   const overlayMain = document.getElementById('overlayMain');
   const overlaySub = document.getElementById('overlaySub');
-  
-  overlayHeader.textContent = "Informasi";
-  overlayMain.textContent = `Masuk Waktu ${name}`;
-  
-  if (name === 'Imsak') {
-    overlaySub.textContent = "Waktunya bersiap untuk memulai puasa";
-  } else if (name === 'Subuh') {
-    overlaySub.textContent = "Selamat menjalankan ibadah puasa";
-  } else if (name === 'Maghrib') {
-    overlaySub.textContent = "Alhamdulillah, selamat berbuka puasa";
-  } else {
-    overlaySub.textContent = "";
-  }
-  
+  overlayHeader.textContent = "SAAT INI SUDAH";
+  overlayMain.textContent = `MASUK WAKTU ${name}`;
+  if (name === 'Imsak') overlaySub.textContent = "Waktunya bersiap untuk memulai puasa";
+  else if (name === 'Subuh') overlaySub.textContent = "Selamat menjalankan ibadah puasa";
+  else if (name === 'Maghrib') overlaySub.textContent = "Alhamdulillah, selamat berbuka puasa";
+  else overlaySub.textContent = "Waktu untuk menunaikan ibadah";
   document.getElementById('overlay').classList.add('show');
   setTimeout(() => document.getElementById('overlay').classList.remove('show'), 15000);
 }
+
+document.getElementById('tvToggle').addEventListener('click', () => {
+  document.body.classList.toggle('tv-mode');
+  if(document.body.classList.contains('tv-mode')) document.documentElement.requestFullscreen?.();
+});
 
 loadData();
 </script>
